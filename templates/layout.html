@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{block "title" .}}Markdown Viewer{{end}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {{block "head" .}}{{end}}
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/">📝 Markdown Viewer</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        {{block "content" .}}{{end}}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Go Markdown Viewer with Live Reload</p>
+        </div>
+    </footer>
+
+    {{block "scripts" .}}{{end}}
+</body>
+</html>

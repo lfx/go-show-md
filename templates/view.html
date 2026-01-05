@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.FileName}} - Markdown Viewer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+      // Wait for DOM and highlight.js to be ready
+      document.addEventListener('DOMContentLoaded', function() {
+        // First, apply syntax highlighting to code blocks (except mermaid)
+        document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
+          hljs.highlightElement(block);
+        });
+
+        // Transform mermaid code blocks
+        document.querySelectorAll('code.language-mermaid').forEach(function(codeBlock) {
+          const pre = codeBlock.parentElement;
+          const mermaidDiv = document.createElement('div');
+          mermaidDiv.className = 'mermaid';
+          mermaidDiv.textContent = codeBlock.textContent;
+          pre.parentElement.replaceChild(mermaidDiv, pre);
+        });
+
+        // Initialize and render mermaid diagrams
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          securityLevel: 'loose'
+        });
+        mermaid.run();
+      });
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/">📝 Markdown Viewer</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="view-content">
+            <div class="file-info">
+                <a href="/" class="back-link">← Back to Home</a>
+                <span class="file-path">{{.FilePath}}</span>
+            </div>
+
+            <article class="markdown-content">
+                {{.Content}}
+            </article>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Go Markdown Viewer with Live Reload</p>
+        </div>
+    </footer>
+
+    <script>
+        const currentFile = "{{.FilePath}}";
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(protocol + '//' + window.location.host + '/ws');
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'file_changed' && data.path === currentFile) {
+                console.log('File changed, reloading...');
+                location.reload();
+            }
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = function() {
+            console.log('WebSocket connection closed');
+        };
+    </script>
+</body>
+</html>

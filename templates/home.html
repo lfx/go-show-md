@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Markdown Viewer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/">📝 Markdown Viewer</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="home-content">
+            <section class="add-directory-section">
+                <h2>Add Directory to Watch</h2>
+                <div class="add-directory-form">
+                    <input type="text" id="directoryInput" placeholder="/path/to/your/markdown/files" />
+                    <button id="addDirectoryBtn">Add Directory</button>
+                </div>
+                <div id="directoryMessage" class="message"></div>
+            </section>
+
+            <section class="upload-section">
+                <h2>Upload Markdown File</h2>
+                <div class="upload-area" id="uploadArea">
+                    <p>Drag & drop a markdown file here or click to upload</p>
+                    <input type="file" id="fileInput" accept=".md,.markdown" style="display: none;" />
+                </div>
+                <div id="uploadMessage" class="message"></div>
+            </section>
+
+            <section class="watched-directories-section">
+                <h2>Watched Directories</h2>
+                {{if .WatchedDirectories}}
+                <ul class="directory-list">
+                    {{range .WatchedDirectories}}
+                    <li>{{.}}</li>
+                    {{end}}
+                </ul>
+                {{else}}
+                <p class="empty-message">No directories being watched. Add one above!</p>
+                {{end}}
+            </section>
+
+            <section class="files-section">
+                <h2>Available Markdown Files</h2>
+                {{if .FilesByDirectory}}
+                    {{range $dir := .Directories}}
+                    <div class="directory-group">
+                        <h3 class="directory-name">{{$dir}}</h3>
+                        <ul class="file-list">
+                            {{range index $.FilesByDirectory $dir}}
+                            <li>
+                                <a href="/view?file={{.Path}}">{{.Name}}</a>
+                                <span class="file-meta">
+                                    {{.Size}} bytes • Modified: {{.ModifiedAt.Format "2006-01-02 15:04:05"}}
+                                </span>
+                            </li>
+                            {{end}}
+                        </ul>
+                    </div>
+                    {{end}}
+                {{else}}
+                <p class="empty-message">No markdown files found. Add a directory or upload a file!</p>
+                {{end}}
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Go Markdown Viewer with Live Reload</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
