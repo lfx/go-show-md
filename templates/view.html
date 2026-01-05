@@ -64,20 +64,30 @@
             border: 1px solid var(--pico-muted-border-color);
         }
         .markdown-content pre {
-            background-color: var(--pico-code-background-color);
             padding: 1rem;
             border-radius: var(--pico-border-radius);
             overflow-x: auto;
         }
+        [data-theme="dark"] .markdown-content pre {
+            background-color: #282c34;
+        }
+        [data-theme="light"] .markdown-content pre {
+            background-color: #fafafa;
+        }
         .markdown-content code {
-            background-color: var(--pico-code-background-color);
             padding: 0.2rem 0.4rem;
             border-radius: 3px;
             font-size: 0.9em;
         }
+        [data-theme="dark"] .markdown-content code {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-theme="light"] .markdown-content code {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
         .markdown-content pre code {
             padding: 0;
-            background-color: transparent;
+            background-color: transparent !important;
         }
         .markdown-content img {
             max-width: 100%;
@@ -118,37 +128,48 @@
 
         updateHighlightTheme(currentTheme);
 
-        // Listen for theme changes
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-          themeToggle.addEventListener('click', function() {
-            setTimeout(() => {
-              const newTheme = document.documentElement.getAttribute('data-theme');
-              updateHighlightTheme(newTheme);
-
-              // Re-initialize mermaid with new theme
-              mermaid.initialize({
-                startOnLoad: false,
-                theme: newTheme === 'dark' ? 'dark' : 'default',
-                securityLevel: 'loose'
-              });
-
-              // Re-render mermaid diagrams
-              const mermaidElements = document.querySelectorAll('.mermaid');
-              mermaidElements.forEach(el => {
-                const originalContent = el.getAttribute('data-original-content');
-                if (originalContent) {
-                  el.innerHTML = originalContent;
-                  el.removeAttribute('data-processed');
-                }
-              });
-              mermaid.run();
-            }, 100);
+        // Store original code content for re-highlighting
+        const codeBlocks = [];
+        document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
+          codeBlocks.push({
+            element: block,
+            originalText: block.textContent
           });
-        }
+        });
+
+        // Listen for theme changes
+        window.addEventListener('themeChanged', function(e) {
+          const newTheme = e.detail.theme;
+          updateHighlightTheme(newTheme);
+
+          // Re-highlight all code blocks
+          codeBlocks.forEach(function(item) {
+            item.element.removeAttribute('data-highlighted');
+            hljs.highlightElement(item.element);
+          });
+
+          // Re-initialize mermaid with new theme
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: newTheme === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose'
+          });
+
+          // Re-render mermaid diagrams
+          const mermaidElements = document.querySelectorAll('.mermaid');
+          mermaidElements.forEach(el => {
+            const originalContent = el.getAttribute('data-original-content');
+            if (originalContent) {
+              el.innerHTML = originalContent;
+              el.removeAttribute('data-processed');
+            }
+          });
+          mermaid.run();
+        });
 
         // First, apply syntax highlighting to code blocks (except mermaid)
         document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
+          // Ensure all code blocks get highlighted even if language isn't specified
           hljs.highlightElement(block);
         });
 
@@ -220,6 +241,9 @@
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             themeIcon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+
+            // Dispatch custom event for code highlighting and mermaid updates
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
         });
     </script>
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/yuin/goldmark"
-	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
@@ -17,10 +16,6 @@ func init() {
 		goldmark.WithExtensions(
 			extension.GFM,
 			extension.Footnote,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("monokai"),
-				highlighting.WithFormatOptions(),
-			),
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
