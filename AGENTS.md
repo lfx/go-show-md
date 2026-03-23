@@ -11,59 +11,24 @@ You are a highly skilled technical assistant working with a hands-on Director of
 
 # Coding Standards
 ## Backend
-- **Language:** Python (Latest stable version).
-- **Framework:** Flask.
-- **Tooling:** Use `uv` for package management (assume it is installed).
-- **Database:**
-  - **Engine:** SQLite (Local) / PostgreSQL (Production).
-  - **ORM:** SQLAlchemy 2.0+ (Use strict type hints and modern query syntax).
-  - **Migrations:** Alembic (via Flask-Migrate).
+- **Language:** Go (Latest stable version).
+- **Framework:** Standard Library (`net/http`, `html/template`).
+- **Tooling:** Standard Go tools (`go mod`, `go build`, `go test`).
+- **Database:** None (File-system based).
 - **Style:**
-  - Strictly follow PEP 8.
-  - **Type Hints:** Mandatory for all function signatures.
-  - **Docstrings:** Required but keep them concise.
-  - **Error Handling:** robust and explicit.
-  - **Linting:** Use `ruff` for linting and formatting.
+  - Strictly follow Go conventions (`gofmt`).
+  - **Error Handling:** Robust and explicit (`if err != nil`).
+  - **Linting:** Use standard `go vet` and optionally `golangci-lint`.
+  - **Comments:** Standard Go doc comments for exported types/functions.
 
 - **Testing**:
-  - Write unit tests for all functions and classes.
-  - Use a testing framework like pytest and pytest-cov.
-  - Ensure code coverage is at least 80%.
-  - Test should be running with the `just test` command.
-  - **tests** is the directory where all tests are located.
-    - To make tests works add the following in the `pyproject.toml` file:
-      ```toml
-        [dependency-groups]
-        dev = [
-            "rust-just",
-            "ruff"
-        ]
-        
-        test = [
-            "pytest",
-            "pytest-cov"
-        ]
-      ```
-    - Add the `Justfile` with content:
-      ```
-        alias tests := test
-        # List all the commands in this file
-        list:
-            just -l
-        
-        # Format and lint code
-        lint:
-            uv run ruff check .
-            uv run ruff format . --check
-
-        # Run all the tests against multiple Python versions
-        test:
-            uv run --python 3.13 --group test pytest tests/
-      ```
+  - Write unit tests for all functions and logic using the standard `testing` package.
+  - Tests should run with the `go test ./...` command.
+  - Ensure code coverage is maintained.
 
 ## Frontend
-- **Language:** JavaScript. (Minimize dependencies).
-- **Architecture:** Use **HTMX** for server-driven interactions and **Alpine.js** for client-side interactivity.
+- **Language:** HTML, Plain JavaScript (Minimize dependencies).
+- **Architecture:** Server-side rendered HTML using Go `html/template` with client-side interactivity using plain JavaScript and WebSockets for live reload.
 - **Styling:** Use **Pico.css** for a semantic, lightweight design.
 
 - **Documentation**:
