@@ -1,0 +1,274 @@
+{{define "view.html"}}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.FileName}} - Markdown Viewer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="highlight-theme-dark">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css" id="highlight-theme-light" disabled>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        header {
+            padding: 1rem 0;
+        }
+        header h1 {
+            margin: 0;
+        }
+        header h1 a {
+            color: var(--pico-primary);
+            text-decoration: none;
+        }
+        header h1 a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            margin-top: 2rem;
+            padding: 1rem 0;
+            text-align: center;
+            opacity: 0.7;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: var(--pico-card-background-color);
+            border-radius: var(--pico-border-radius);
+            border: 1px solid var(--pico-muted-border-color);
+        }
+        .back-link {
+            text-decoration: none;
+            color: var(--pico-primary);
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .file-path {
+            font-family: monospace;
+            color: var(--pico-muted-color);
+            font-size: 0.9rem;
+        }
+        .markdown-content {
+            padding: 2rem;
+            background-color: var(--pico-card-background-color);
+            border-radius: var(--pico-border-radius);
+            border: 1px solid var(--pico-muted-border-color);
+        }
+        .markdown-content pre {
+            padding: 1rem;
+            border-radius: var(--pico-border-radius);
+            overflow-x: auto;
+        }
+        [data-theme="dark"] .markdown-content pre {
+            background-color: #282c34;
+        }
+        [data-theme="light"] .markdown-content pre {
+            background-color: #fafafa;
+        }
+        .markdown-content code {
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        [data-theme="dark"] .markdown-content code {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        [data-theme="light"] .markdown-content code {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .markdown-content pre code {
+            padding: 0;
+            background-color: transparent !important;
+        }
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--pico-border-radius);
+        }
+        .markdown-content table {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        .mermaid {
+            background-color: transparent;
+            text-align: center;
+            padding: 1rem;
+        }
+    </style>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+      // Wait for DOM and highlight.js to be ready
+      document.addEventListener('DOMContentLoaded', function() {
+        // Get current theme
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+
+        // Update highlight.js theme based on current theme
+        function updateHighlightTheme(theme) {
+          const darkTheme = document.getElementById('highlight-theme-dark');
+          const lightTheme = document.getElementById('highlight-theme-light');
+
+          if (theme === 'dark') {
+            darkTheme.disabled = false;
+            lightTheme.disabled = true;
+          } else {
+            darkTheme.disabled = true;
+            lightTheme.disabled = false;
+          }
+        }
+
+        updateHighlightTheme(currentTheme);
+
+        // Store original code content for re-highlighting
+        const codeBlocks = [];
+        document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
+          codeBlocks.push({
+            element: block,
+            originalText: block.textContent
+          });
+        });
+
+        // Listen for theme changes
+        window.addEventListener('themeChanged', function(e) {
+          const newTheme = e.detail.theme;
+          updateHighlightTheme(newTheme);
+
+          // Re-highlight all code blocks
+          codeBlocks.forEach(function(item) {
+            item.element.removeAttribute('data-highlighted');
+            hljs.highlightElement(item.element);
+          });
+
+          // Re-initialize mermaid with new theme
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: newTheme === 'dark' ? 'dark' : 'default',
+            securityLevel: 'loose'
+          });
+
+          // Re-render mermaid diagrams
+          const mermaidElements = document.querySelectorAll('.mermaid');
+          mermaidElements.forEach(el => {
+            const originalContent = el.getAttribute('data-original-content');
+            if (originalContent) {
+              el.innerHTML = originalContent;
+              el.removeAttribute('data-processed');
+            }
+          });
+          mermaid.run();
+        });
+
+        // First, apply syntax highlighting to code blocks (except mermaid)
+        document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
+          // Ensure all code blocks get highlighted even if language isn't specified
+          hljs.highlightElement(block);
+        });
+
+        // Transform mermaid code blocks and store original content
+        document.querySelectorAll('code.language-mermaid').forEach(function(codeBlock) {
+          const pre = codeBlock.parentElement;
+          const mermaidDiv = document.createElement('div');
+          mermaidDiv.className = 'mermaid';
+          mermaidDiv.textContent = codeBlock.textContent;
+          mermaidDiv.setAttribute('data-original-content', codeBlock.textContent);
+          pre.parentElement.replaceChild(mermaidDiv, pre);
+        });
+
+        // Initialize and render mermaid diagrams
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: currentTheme === 'dark' ? 'dark' : 'default',
+          securityLevel: 'loose'
+        });
+        mermaid.run();
+      });
+    </script>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span id="themeIcon">🌙</span>
+    </button>
+
+    <header>
+        <div class="container">
+            <h1><a href="/">📝 Markdown Viewer</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="view-content">
+            <div class="file-info">
+                <a href="/" class="back-link">← Back to Home</a>
+                <span class="file-path">{{.FilePath}}</span>
+            </div>
+
+            <article class="markdown-content">
+                {{.Content}}
+            </article>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Go Markdown Viewer with Live Reload</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+
+        // Initialize theme from localStorage or default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        html.setAttribute('data-theme', savedTheme);
+        themeIcon.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeIcon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+
+            // Dispatch custom event for code highlighting and mermaid updates
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
+        });
+    </script>
+
+    <script>
+        const currentFile = "{{.FilePath}}";
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(protocol + '//' + window.location.host + '/ws');
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'file_changed' && data.path === currentFile) {
+                console.log('File changed, reloading...');
+                location.reload();
+            }
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = function() {
+            console.log('WebSocket connection closed');
+        };
+    </script>
+</body>
+</html>
+{{end}}

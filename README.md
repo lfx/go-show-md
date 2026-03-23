@@ -7,6 +7,8 @@ A single-service Go web application that renders markdown files from multiple di
 - ✅ **Multi-directory support**: Watch multiple directories for markdown files
 - ✅ **Mermaid diagrams**: Full support for Mermaid diagram rendering
 - ✅ **Code highlighting**: Syntax highlighting for various programming languages
+- ✅ **Smart file selection**: Automatically ignore noisy directories like `.git`, `node_modules`, `venv`, and more.
+- ✅ **Custom ignore patterns**: Configure global and per-project ignore lists.
 - ✅ **Live reload**: Automatic page refresh when markdown files change
 - ✅ **Drag & drop**: Upload markdown files via drag-and-drop
 - ✅ **Dark theme**: Beautiful dark theme optimized for reading
@@ -58,19 +60,32 @@ When you edit a markdown file in your watched directories:
 
 ## Configuration
 
-The application creates a `config.json` file to store watched directories:
+The application creates a `config.json` file to store watched directories and ignore patterns:
 
 ```json
 {
   "watched_directories": [
     "/path/to/your/docs"
   ],
+  "ignored_patterns": [
+    "temp_*",
+    "backup_*.md"
+  ],
   "port": 8080,
   "host": "127.0.0.1"
 }
 ```
 
-You can manually edit this file to add or remove directories.
+### Ignoring Files & Directories
+
+The application uses a "smart selection" mechanism to filter markdown files:
+
+1. **Default Ignore List**: Common noisy directories like `.git`, `.venv`, `venv`, `node_modules`, `vendor`, and `.env` are ignored by default.
+2. **Global Configuration**: You can create a file at `~/.go-show-md-ignore` with custom patterns (one per line).
+3. **Per-Project Configuration**: You can place a `.go-show-md-ignore` file inside any watched directory to add project-specific ignore patterns.
+4. **App Configuration**: Use the `ignored_patterns` array in `config.json` to specify patterns globally across all watched directories.
+
+Patterns are matched using standard shell-style wildcards (e.g., `test_*.md`, `build/`).
 
 ## Project Structure
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"go-show-md/internal/config"
 )
 
 type FileEvent struct {
@@ -18,6 +19,7 @@ type FileEvent struct {
 
 type Watcher struct {
 	fsWatcher     *fsnotify.Watcher
+	cfg           *config.Config
 	directories   []string
 	eventChan     chan FileEvent
 	debounceMap   map[string]*time.Timer
@@ -25,7 +27,7 @@ type Watcher struct {
 	stopChan      chan bool
 }
 
-func New() (*Watcher, error) {
+func New(cfg *config.Config) (*Watcher, error) {
 	fsWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -33,6 +35,7 @@ func New() (*Watcher, error) {
 
 	return &Watcher{
 		fsWatcher:   fsWatcher,
+		cfg:         cfg,
 		directories: []string{},
 		eventChan:   make(chan FileEvent, 100),
 		debounceMap: make(map[string]*time.Timer),
@@ -52,7 +55,7 @@ func (w *Watcher) AddDirectory(dir string) error {
 		}
 	}
 
-	if err := w.addRecursive(absDir); err != nil {
+	if err := w.addRecursive(absDir, absDir); err != nil {
 		return err
 	}
 
@@ -60,9 +63,23 @@ func (w *Watcher) AddDirectory(dir string) error {
 	return nil
 }
 
-func (w *Watcher) addRecursive(dir string) error {
+func (w *Watcher) addRecursive(dir string, rootDir string) error {
+	globalPatterns := config.GetGlobalIgnorePatterns()
+	var localPatterns []string
+	if rootDir != "" {
+		localPatterns = config.GetLocalIgnorePatterns(rootDir)
+	}
+	patterns := config.MergeIgnorePatterns(config.DefaultIgnoredPatterns, globalPatterns, localPatterns, w.cfg.IgnoredPatterns)
+
 	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			return nil
+		}
+
+		if config.IsIgnored(path, info, patterns) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
@@ -92,7 +109,11 @@ func (w *Watcher) Start() {
 				if event.Op&fsnotify.Create != 0 {
 					info, err := os.Stat(event.Name)
 					if err == nil && info.IsDir() {
-						w.addRecursive(event.Name)
+						// Note: for newly created directories inside a watched root, 
+						// we'd need to find the actual root to get the local patterns.
+						// To keep it simple, we pass the directory itself as root, 
+						// which will pick up any local ignore file if it exists inside.
+						w.addRecursive(event.Name, event.Name)
 					}
 				}
 

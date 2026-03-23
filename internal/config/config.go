@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	WatchedDirectories []string `json:"watched_directories"`
+	IgnoredPatterns    []string `json:"ignored_patterns"`
 	Port               int      `json:"port"`
 	Host               string   `json:"host"`
 }
@@ -35,6 +36,7 @@ func Load(configPath string) (*Config, error) {
 		if os.IsNotExist(err) {
 			return &Config{
 				WatchedDirectories: []string{},
+				IgnoredPatterns:    []string{},
 				Port:               8080,
 				Host:               "127.0.0.1",
 			}, nil
@@ -105,9 +107,21 @@ func (c *Config) RemoveDirectory(dir string) bool {
 func (c *Config) ScanMarkdownFiles() ([]FileInfo, error) {
 	var files []FileInfo
 
+	globalPatterns := GetGlobalIgnorePatterns()
+
 	for _, dir := range c.WatchedDirectories {
+		localPatterns := GetLocalIgnorePatterns(dir)
+		patterns := MergeIgnorePatterns(DefaultIgnoredPatterns, globalPatterns, localPatterns, c.IgnoredPatterns)
+
 		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
+				return nil
+			}
+
+			if IsIgnored(path, info, patterns) {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 
