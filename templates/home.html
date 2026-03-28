@@ -134,9 +134,13 @@
             <section class="watched-directories-section">
                 <h2>Watched Directories</h2>
                 {{if .WatchedDirectories}}
+                <div id="removeMessage" class="message" style="display: none; margin-bottom: 1rem;"></div>
                 <ul class="directory-list">
                     {{range .WatchedDirectories}}
-                    <li>{{.}}</li>
+                    <li class="directory-item" data-dir="{{.}}" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>{{.}}</span>
+                        <button class="outline secondary remove-dir-btn" data-dir="{{.}}" style="margin-bottom: 0; padding: 0.25rem 0.75rem; width: auto;">Untrack</button>
+                    </li>
                     {{end}}
                 </ul>
                 {{else}}

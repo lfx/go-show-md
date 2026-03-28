@@ -138,6 +138,7 @@ func startServer() {
 	mux.Handle("/", handlers.NewHomeHandler(cfg, tmpl))
 	mux.Handle("/view", handlers.NewViewHandler(cfg, tmpl))
 	mux.Handle("/api/add-directory", handlers.NewAddDirectoryHandler(cfg, w))
+	mux.Handle("/api/remove-directory", handlers.NewRemoveDirectoryHandler(cfg, w))
 	mux.Handle("/api/upload", handlers.NewUploadHandler(cfg, w))
 	mux.Handle("/ws", handlers.NewWSHandler(w))
 
