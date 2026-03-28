@@ -163,6 +163,30 @@ func (w *Watcher) Events() <-chan FileEvent {
 	return w.eventChan
 }
 
+func (w *Watcher) RemoveDirectory(dir string) error {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+
+	var newDirs []string
+	for _, d := range w.directories {
+		if d != absDir {
+			newDirs = append(newDirs, d)
+		}
+	}
+	w.directories = newDirs
+
+	filepath.Walk(absDir, func(path string, info os.FileInfo, err error) error {
+		if err == nil && info.IsDir() {
+			w.fsWatcher.Remove(path)
+		}
+		return nil
+	})
+
+	return nil
+}
+
 func (w *Watcher) Close() error {
 	close(w.stopChan)
 	return w.fsWatcher.Close()
