@@ -105,6 +105,13 @@ go-show-md/
 └── watched-files/         # Uploaded files (auto-generated)
 ```
 
+## Releases
+
+Automated builds and releases are managed via [GoReleaser](https://goreleaser.com/) and GitHub Actions.
+
+- **GitHub Releases:** Every push to the `main` branch automatically triggers a new release package. A version tag is auto-generated, and macOS native binaries (both Intel `amd64` and Apple Silicon `arm64`) are published to the Releases page as `.tar.gz` archives.
+- **Archive Contents:** The downloaded archive includes the compiled executable alongside the required `static/` and `templates/` folders so the application works seamlessly right out of the box.
+
 ## Dependencies
 
 - [goldmark](https://github.com/yuin/goldmark) - Markdown parser

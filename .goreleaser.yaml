@@ -1,0 +1,37 @@
+version: 2
+project_name: go-show-md
+
+builds:
+  - id: default
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    binary: go-show-md
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - templates/**/*
+      - static/**/*
+      - README.md
+      - LICENSE
+
+# Automatically generate a release on GitHub
+release:
+  github:
+    owner: ""
+    name: ""
+  prerelease: auto
+
+# Disable generating a macOS .app or similar unless requested
+# For homebrew, tar.gz with binary is enough.

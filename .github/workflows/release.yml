@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    # Also allow standard tag publishing if you prefer that later
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # Needed to publish GitHub Releases
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Worktree
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important for GoReleaser to parse Git tags properly
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Tag the commit (only if pushed to main)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          TAG="v1.0.${{ github.run_number }}"
+          git tag $TAG
+          git push origin $TAG
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
