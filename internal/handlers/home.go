@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
+	"time"
 
 	"go-show-md/internal/config"
 )
@@ -28,6 +30,18 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sortBy := r.URL.Query().Get("sort")
+	if sortBy == "updated" {
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].ModifiedAt.After(files[j].ModifiedAt)
+		})
+	} else {
+		sortBy = "name"
+		sort.Slice(files, func(i, j int) bool {
+			return files[i].Name < files[j].Name
+		})
+	}
+
 	filesByDir := make(map[string][]config.FileInfo)
 	for _, file := range files {
 		filesByDir[file.Directory] = append(filesByDir[file.Directory], file)
@@ -37,10 +51,12 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Directories        []string
 		FilesByDirectory   map[string][]config.FileInfo
 		WatchedDirectories []string
+		CurrentSort        string
 	}{
-		Directories:        getSortedKeys(filesByDir),
+		Directories:        getSortedKeys(filesByDir, sortBy),
 		FilesByDirectory:   filesByDir,
 		WatchedDirectories: h.config.WatchedDirectories,
+		CurrentSort:        sortBy,
 	}
 
 	if err := h.tmpl.ExecuteTemplate(w, "home.html", data); err != nil {
@@ -49,10 +65,29 @@ func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getSortedKeys(m map[string][]config.FileInfo) []string {
+func getSortedKeys(m map[string][]config.FileInfo, sortBy string) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
+	
+	if sortBy == "updated" {
+		sort.Slice(keys, func(i, j int) bool {
+			var timeI, timeJ time.Time
+			if len(m[keys[i]]) > 0 {
+				timeI = m[keys[i]][0].ModifiedAt
+			}
+			if len(m[keys[j]]) > 0 {
+				timeJ = m[keys[j]][0].ModifiedAt
+			}
+			if timeI.Equal(timeJ) {
+				return keys[i] < keys[j]
+			}
+			return timeI.After(timeJ)
+		})
+	} else {
+		sort.Strings(keys)
+	}
+	
 	return keys
 }

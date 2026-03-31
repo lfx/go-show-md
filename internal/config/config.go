@@ -106,6 +106,7 @@ func (c *Config) RemoveDirectory(dir string) bool {
 
 func (c *Config) ScanMarkdownFiles() ([]FileInfo, error) {
 	var files []FileInfo
+	seen := make(map[string]bool)
 
 	globalPatterns := GetGlobalIgnorePatterns()
 
@@ -130,13 +131,16 @@ func (c *Config) ScanMarkdownFiles() ([]FileInfo, error) {
 			}
 
 			if strings.HasSuffix(strings.ToLower(info.Name()), ".md") {
-				files = append(files, FileInfo{
-					Path:       path,
-					Name:       info.Name(),
-					Directory:  filepath.Dir(path),
-					ModifiedAt: info.ModTime(),
-					Size:       info.Size(),
-				})
+				if !seen[path] {
+					seen[path] = true
+					files = append(files, FileInfo{
+						Path:       path,
+						Name:       info.Name(),
+						Directory:  filepath.Dir(path),
+						ModifiedAt: info.ModTime(),
+						Size:       info.Size(),
+					})
+				}
 			}
 
 			return nil
