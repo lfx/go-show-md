@@ -1,40 +1,51 @@
 {{define "view.html"}}
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.FileName}} - Markdown Viewer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="highlight-theme-dark">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css" id="highlight-theme-light" disabled>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+        id="highlight-theme-dark">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css"
+        id="highlight-theme-light" disabled>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <style>
         header {
             padding: 1rem 0;
         }
+
         header h1 {
             margin: 0;
         }
+
         header h1 a {
             color: var(--pico-primary);
             text-decoration: none;
         }
+
         header h1 a:hover {
             text-decoration: underline;
         }
+
         footer {
             margin-top: 2rem;
             padding: 1rem 0;
             text-align: center;
             opacity: 0.7;
         }
+
         .theme-toggle {
             position: fixed;
             top: 1rem;
             right: 1rem;
             z-index: 1000;
         }
+
         .file-info {
             display: flex;
             justify-content: space-between;
@@ -45,154 +56,356 @@
             border-radius: var(--pico-border-radius);
             border: 1px solid var(--pico-muted-border-color);
         }
+
         .back-link {
             text-decoration: none;
             color: var(--pico-primary);
         }
+
         .back-link:hover {
             text-decoration: underline;
         }
+
         .file-path {
             font-family: monospace;
             color: var(--pico-muted-color);
             font-size: 0.9rem;
         }
+
         .markdown-content {
             padding: 2rem;
             background-color: var(--pico-card-background-color);
             border-radius: var(--pico-border-radius);
             border: 1px solid var(--pico-muted-border-color);
         }
+
         .markdown-content pre {
             padding: 1rem;
             border-radius: var(--pico-border-radius);
             overflow-x: auto;
         }
+
         [data-theme="dark"] .markdown-content pre {
             background-color: #282c34;
         }
+
         [data-theme="light"] .markdown-content pre {
             background-color: #fafafa;
         }
+
         .markdown-content code {
             padding: 0.2rem 0.4rem;
             border-radius: 3px;
             font-size: 0.9em;
         }
+
         [data-theme="dark"] .markdown-content code {
             background-color: rgba(255, 255, 255, 0.1);
         }
+
         [data-theme="light"] .markdown-content code {
             background-color: rgba(0, 0, 0, 0.05);
         }
+
         .markdown-content pre code {
             padding: 0;
             background-color: transparent !important;
         }
+
         .markdown-content img {
             max-width: 100%;
             height: auto;
             border-radius: var(--pico-border-radius);
         }
+
         .markdown-content table {
             width: 100%;
             margin: 1rem 0;
         }
+
+        .mermaid-container {
+            position: relative;
+            margin: 1.5rem 0;
+            border: 1px solid var(--pico-muted-border-color);
+            border-radius: var(--pico-border-radius);
+            background-color: var(--pico-card-background-color);
+        }
+
+        .mermaid-toolbar {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .mermaid-container:hover .mermaid-toolbar {
+            opacity: 1;
+        }
+
+        .mermaid-toolbar button {
+            width: auto;
+            padding: 0.2rem 0.5rem;
+            margin: 0;
+            font-size: 0.9rem;
+            background-color: var(--pico-secondary-background);
+            color: var(--pico-secondary-inverse);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .mermaid-toolbar button:hover {
+            background-color: var(--pico-secondary-hover-background);
+        }
+
+        .mermaid-wrapper {
+            overflow: auto;
+            padding: 1rem;
+            width: 100%;
+            text-align: center;
+        }
+
         .mermaid {
             background-color: transparent;
             text-align: center;
-            padding: 1rem;
+            display: inline-block;
         }
     </style>
     <script type="module">
-      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
 
-      // Wait for DOM and highlight.js to be ready
-      document.addEventListener('DOMContentLoaded', function() {
-        // Get current theme
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        // Wait for DOM and highlight.js to be ready
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get current theme
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
 
-        // Update highlight.js theme based on current theme
-        function updateHighlightTheme(theme) {
-          const darkTheme = document.getElementById('highlight-theme-dark');
-          const lightTheme = document.getElementById('highlight-theme-light');
+            // Update highlight.js theme based on current theme
+            function updateHighlightTheme(theme) {
+                const darkTheme = document.getElementById('highlight-theme-dark');
+                const lightTheme = document.getElementById('highlight-theme-light');
 
-          if (theme === 'dark') {
-            darkTheme.disabled = false;
-            lightTheme.disabled = true;
-          } else {
-            darkTheme.disabled = true;
-            lightTheme.disabled = false;
-          }
-        }
-
-        updateHighlightTheme(currentTheme);
-
-        // Store original code content for re-highlighting
-        const codeBlocks = [];
-        document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
-          codeBlocks.push({
-            element: block,
-            originalText: block.textContent
-          });
-        });
-
-        // Listen for theme changes
-        window.addEventListener('themeChanged', function(e) {
-          const newTheme = e.detail.theme;
-          updateHighlightTheme(newTheme);
-
-          // Re-highlight all code blocks
-          codeBlocks.forEach(function(item) {
-            item.element.removeAttribute('data-highlighted');
-            hljs.highlightElement(item.element);
-          });
-
-          // Re-initialize mermaid with new theme
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: newTheme === 'dark' ? 'dark' : 'default',
-            securityLevel: 'loose'
-          });
-
-          // Re-render mermaid diagrams
-          const mermaidElements = document.querySelectorAll('.mermaid');
-          mermaidElements.forEach(el => {
-            const originalContent = el.getAttribute('data-original-content');
-            if (originalContent) {
-              el.innerHTML = originalContent;
-              el.removeAttribute('data-processed');
+                if (theme === 'dark') {
+                    darkTheme.disabled = false;
+                    lightTheme.disabled = true;
+                } else {
+                    darkTheme.disabled = true;
+                    lightTheme.disabled = false;
+                }
             }
-          });
-          mermaid.run();
-        });
 
-        // First, apply syntax highlighting to code blocks (except mermaid)
-        document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function(block) {
-          // Ensure all code blocks get highlighted even if language isn't specified
-          hljs.highlightElement(block);
-        });
+            updateHighlightTheme(currentTheme);
 
-        // Transform mermaid code blocks and store original content
-        document.querySelectorAll('code.language-mermaid').forEach(function(codeBlock) {
-          const pre = codeBlock.parentElement;
-          const mermaidDiv = document.createElement('div');
-          mermaidDiv.className = 'mermaid';
-          mermaidDiv.textContent = codeBlock.textContent;
-          mermaidDiv.setAttribute('data-original-content', codeBlock.textContent);
-          pre.parentElement.replaceChild(mermaidDiv, pre);
-        });
+            // Store original code content for re-highlighting
+            const codeBlocks = [];
+            document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function (block) {
+                codeBlocks.push({
+                    element: block,
+                    originalText: block.textContent
+                });
+            });
 
-        // Initialize and render mermaid diagrams
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: currentTheme === 'dark' ? 'dark' : 'default',
-          securityLevel: 'loose'
+            // Listen for theme changes
+            window.addEventListener('themeChanged', function (e) {
+                const newTheme = e.detail.theme;
+                updateHighlightTheme(newTheme);
+
+                // Re-highlight all code blocks
+                codeBlocks.forEach(function (item) {
+                    item.element.removeAttribute('data-highlighted');
+                    hljs.highlightElement(item.element);
+                });
+
+                // Re-initialize mermaid with new theme
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: newTheme === 'dark' ? 'dark' : 'default',
+                    securityLevel: 'loose'
+                });
+
+                // Re-render mermaid diagrams
+                const mermaidElements = document.querySelectorAll('.mermaid');
+                mermaidElements.forEach(el => {
+                    const originalContent = el.getAttribute('data-original-content');
+                    if (originalContent) {
+                        el.innerHTML = originalContent;
+                        el.removeAttribute('data-processed');
+                    }
+                });
+                mermaid.run().then(() => {
+                    mermaidElements.forEach(div => {
+                        applyZoom(div, parseFloat(div.getAttribute('data-zoom') || '1.0'));
+                    });
+                }).catch(err => console.error(err));
+            });
+
+            // First, apply syntax highlighting to code blocks (except mermaid)
+            document.querySelectorAll('pre code:not(.language-mermaid)').forEach(function (block) {
+                // Ensure all code blocks get highlighted even if language isn't specified
+                hljs.highlightElement(block);
+            });
+            function applyZoom(mermaidDiv, zoomLevel) {
+                const svg = mermaidDiv.querySelector('svg');
+                if (!svg) return;
+
+                if (!svg.dataset.zoomInitialized) {
+                    svg.dataset.zoomInitialized = 'true';
+
+                    // Remove max-width constraints
+                    svg.style.maxWidth = 'none';
+                    if (svg.getAttribute('style')) {
+                        svg.setAttribute('style', svg.getAttribute('style').replace(/max-width:\s*[^;]+;?/g, ''));
+                    }
+
+                    let baseW = parseFloat(svg.getAttribute('width'));
+                    let baseH = parseFloat(svg.getAttribute('height'));
+
+                    if (isNaN(baseW) || isNaN(baseH)) {
+                        const viewBox = svg.getAttribute('viewBox');
+                        if (viewBox) {
+                            const parts = viewBox.split(' ');
+                            if (parts.length === 4) {
+                                baseW = parseFloat(parts[2]);
+                                baseH = parseFloat(parts[3]);
+                            }
+                        }
+                    }
+
+                    if (isNaN(baseW) || isNaN(baseH)) {
+                        const rect = svg.getBoundingClientRect();
+                        baseW = rect.width;
+                        baseH = rect.height;
+                    }
+
+                    svg.dataset.baseWidth = baseW;
+                    svg.dataset.baseHeight = baseH;
+                }
+
+                const bw = parseFloat(svg.dataset.baseWidth);
+                const bh = parseFloat(svg.dataset.baseHeight);
+
+                if (!isNaN(bw) && bw > 0) {
+                    svg.style.width = (bw * zoomLevel) + 'px';
+                    svg.style.maxWidth = 'none'; // enforce again
+                }
+                if (!isNaN(bh) && bh > 0) {
+                    svg.style.height = (bh * zoomLevel) + 'px';
+                }
+            }
+            // Transform mermaid code blocks and store original content
+            document.querySelectorAll('code.language-mermaid').forEach(function (codeBlock) {
+                const pre = codeBlock.parentElement;
+                const container = document.createElement('div');
+                container.className = 'mermaid-container';
+
+                const toolbar = document.createElement('div');
+                toolbar.className = 'mermaid-toolbar';
+
+                const btnZoomOut = document.createElement('button');
+                btnZoomOut.innerHTML = '&#8722;'; // Minus sign
+                btnZoomOut.title = 'Zoom Out';
+
+                const btnReset = document.createElement('button');
+                btnReset.innerHTML = '&#8635;'; // Refresh/Reset arrow
+                btnReset.title = 'Reset Zoom';
+
+                const btnZoomIn = document.createElement('button');
+                btnZoomIn.innerHTML = '&#43;'; // Plus sign
+                btnZoomIn.title = 'Zoom In';
+
+                toolbar.appendChild(btnZoomOut);
+                toolbar.appendChild(btnReset);
+                toolbar.appendChild(btnZoomIn);
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'mermaid-wrapper';
+                const mermaidDiv = document.createElement('div');
+                mermaidDiv.className = 'mermaid';
+                mermaidDiv.textContent = codeBlock.textContent;
+                mermaidDiv.setAttribute('data-original-content', codeBlock.textContent);
+                mermaidDiv.setAttribute('data-zoom', '1.0');
+
+                btnZoomIn.addEventListener('click', () => {
+                    let zoom = parseFloat(mermaidDiv.getAttribute('data-zoom'));
+                    zoom *= 1.2;
+                    mermaidDiv.setAttribute('data-zoom', zoom);
+                    applyZoom(mermaidDiv, zoom);
+                });
+
+                btnZoomOut.addEventListener('click', () => {
+                    let zoom = parseFloat(mermaidDiv.getAttribute('data-zoom'));
+                    zoom /= 1.2;
+                    mermaidDiv.setAttribute('data-zoom', zoom);
+                    applyZoom(mermaidDiv, zoom);
+                });
+
+                btnReset.addEventListener('click', () => {
+                    mermaidDiv.setAttribute('data-zoom', '1.0');
+                    applyZoom(mermaidDiv, 1.0);
+                });
+
+                wrapper.appendChild(mermaidDiv);
+                
+                // Panning functionality
+                let isDown = false;
+                let startX;
+                let startY;
+                let scrollLeft;
+                let scrollTop;
+
+                wrapper.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    wrapper.style.cursor = 'grabbing';
+                    startX = e.pageX - wrapper.offsetLeft;
+                    startY = e.pageY - wrapper.offsetTop;
+                    scrollLeft = wrapper.scrollLeft;
+                    scrollTop = wrapper.scrollTop;
+                });
+                wrapper.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    wrapper.style.cursor = 'grab';
+                });
+                wrapper.addEventListener('mouseup', () => {
+                    isDown = false;
+                    wrapper.style.cursor = 'grab';
+                });
+                wrapper.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - wrapper.offsetLeft;
+                    const y = e.pageY - wrapper.offsetTop;
+                    const walkX = (x - startX) * 1.5; // Scroll speed multiplier
+                    const walkY = (y - startY) * 1.5;
+                    wrapper.scrollLeft = scrollLeft - walkX;
+                    wrapper.scrollTop = scrollTop - walkY;
+                });
+                wrapper.style.cursor = 'grab';
+
+                container.appendChild(toolbar);
+                container.appendChild(wrapper);
+
+                pre.parentElement.replaceChild(container, pre);
+            });
+
+            // Initialize and render mermaid diagrams
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: currentTheme === 'dark' ? 'dark' : 'default',
+                securityLevel: 'loose'
+            });
+            mermaid.run().then(() => {
+                document.querySelectorAll('.mermaid').forEach(div => {
+                    applyZoom(div, parseFloat(div.getAttribute('data-zoom') || '1.0'));
+                });
+            }).catch(err => console.error(err));
         });
-        mermaid.run();
-      });
     </script>
 </head>
+
 <body>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
         <span id="themeIcon">🌙</span>
@@ -253,7 +466,7 @@
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(protocol + '//' + window.location.host + '/ws');
 
-        ws.onmessage = function(event) {
+        ws.onmessage = function (event) {
             const data = JSON.parse(event.data);
             if (data.type === 'file_changed' && data.path === currentFile) {
                 console.log('File changed, reloading...');
@@ -261,40 +474,40 @@
             }
         };
 
-        ws.onerror = function(error) {
+        ws.onerror = function (error) {
             console.error('WebSocket error:', error);
         };
 
-        ws.onclose = function() {
+        ws.onclose = function () {
             console.log('WebSocket connection closed');
         };
 
         // Handle internal links in markdown
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const link = e.target.closest('a');
             if (!link) return;
-            
+
             // Only intercept links within markdown content
             if (!link.closest('.markdown-content')) return;
-            
+
             const href = link.getAttribute('href');
             // Ignore if no href, absolute URLs, mailto, or page anchors
-            if (!href || 
-                href.startsWith('http://') || 
-                href.startsWith('https://') || 
-                href.startsWith('mailto:') || 
+            if (!href ||
+                href.startsWith('http://') ||
+                href.startsWith('https://') ||
+                href.startsWith('mailto:') ||
                 href.startsWith('#') ||
                 href.startsWith('//')) {
                 return;
             }
-            
+
             e.preventDefault();
-            
+
             // Normalize path separators to handle Windows paths in basePath
             const normalizedBasePath = currentFile.replace(/\\/g, '/');
             let parts = normalizedBasePath.split('/');
             const filename = parts.pop(); // Remove current filename
-            
+
             let targetHref = href;
             let hash = "";
             let hashIndex = targetHref.indexOf('#');
@@ -326,10 +539,11 @@
                 }
                 newPath = parts.join('/');
             }
-            
+
             window.location.href = '/view?file=' + encodeURIComponent(newPath) + hash;
         });
     </script>
 </body>
+
 </html>
 {{end}}
