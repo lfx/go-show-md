@@ -31,7 +31,18 @@ A single-service Go web application that renders markdown files from multiple di
 
 ## Usage
 
-### Adding Directories to Watch
+### Command Line Interface (CLI)
+
+You can dynamically add directories or files to be tracked by `go-show-md` using the `--add` flag from your terminal.
+
+```bash
+go-show-md --add /path/to/my/docs
+```
+
+- If `go-show-md` is **already running**, the command communicates with the running instance to start tracking the new folder immediately and exits.
+- If it is **not running**, the command gracefully registers the directory in your configuration file so that it will be watched automatically on your next launch.
+
+### Adding Directories via UI
 
 1. On the home page, enter a directory path in the "Add Directory to Watch" input field
 2. Click "Add Directory" button
