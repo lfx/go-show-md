@@ -26,6 +26,9 @@ archives:
       - README.md
       - LICENSE
 
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+
 # Automatically generate a release on GitHub
 release:
   github:
@@ -33,5 +36,21 @@ release:
     name: ""
   prerelease: auto
 
-# Disable generating a macOS .app or similar unless requested
-# For homebrew, tar.gz with binary is enough.
+# Automatically update the Homebrew formula in the tap repository
+brews:
+  - repository:
+      owner: lfx
+      name: homebrew-tools
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
+    # The directory inside the tap repository
+    directory: Formula
+
+    # Metadata
+    description: "Lightweight macOS markdown file viewer and navigator"
+    homepage: "https://github.com/lfx/go-show-md"
+
+    # Custom test instructions
+    test: |
+      assert_path_exists bin/"go-show-md"
+      assert_predicate bin/"go-show-md", :executable?
