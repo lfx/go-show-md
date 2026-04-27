@@ -268,6 +268,67 @@
         ws.onclose = function() {
             console.log('WebSocket connection closed');
         };
+
+        // Handle internal links in markdown
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link) return;
+            
+            // Only intercept links within markdown content
+            if (!link.closest('.markdown-content')) return;
+            
+            const href = link.getAttribute('href');
+            // Ignore if no href, absolute URLs, mailto, or page anchors
+            if (!href || 
+                href.startsWith('http://') || 
+                href.startsWith('https://') || 
+                href.startsWith('mailto:') || 
+                href.startsWith('#') ||
+                href.startsWith('//')) {
+                return;
+            }
+            
+            e.preventDefault();
+            
+            // Normalize path separators to handle Windows paths in basePath
+            const normalizedBasePath = currentFile.replace(/\\/g, '/');
+            let parts = normalizedBasePath.split('/');
+            const filename = parts.pop(); // Remove current filename
+            
+            let targetHref = href;
+            let hash = "";
+            let hashIndex = targetHref.indexOf('#');
+            if (hashIndex !== -1) {
+                hash = targetHref.substring(hashIndex);
+                targetHref = targetHref.substring(0, hashIndex);
+            }
+
+            // If it's just an anchor link within the current document
+            if (targetHref === "" || targetHref === filename) {
+                if (hash) {
+                    window.location.hash = hash;
+                }
+                return;
+            }
+
+            let newPath = "";
+            if (targetHref.startsWith('/')) {
+                newPath = targetHref;
+            } else {
+                const hrefParts = targetHref.split('/');
+                for (const p of hrefParts) {
+                    if (p === '' || p === '.') continue;
+                    if (p === '..') {
+                        if (parts.length > 0) parts.pop();
+                    } else {
+                        parts.push(p);
+                    }
+                }
+                newPath = parts.join('/');
+            }
+            
+            window.location.href = '/view?file=' + encodeURIComponent(newPath) + hash;
+        });
     </script>
 </body>
 </html>

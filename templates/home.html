@@ -149,7 +149,17 @@
             </section>
 
             <section class="files-section">
-                <h2>Available Markdown Files</h2>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;">
+                    <h2 style="margin-bottom: 0;">Available Markdown Files</h2>
+                    <div class="sort-options" style="font-size: 0.9em;">
+                        Sort by: 
+                        {{if eq .CurrentSort "updated"}}
+                            <a href="/?sort=name">Name</a> | <strong>Updated</strong>
+                        {{else}}
+                            <strong>Name</strong> | <a href="/?sort=updated">Updated</a>
+                        {{end}}
+                    </div>
+                </div>
                 {{if .FilesByDirectory}}
                     {{range $dir := .Directories}}
                     <div class="directory-group">
@@ -197,6 +207,29 @@
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             themeIcon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+        });
+
+        // Make watched directories clickable to scroll down to their files
+        document.querySelectorAll('.directory-item span').forEach(span => {
+            span.style.cursor = 'pointer';
+            span.style.color = 'var(--pico-primary)';
+            span.addEventListener('click', () => {
+                const clickedDir = span.parentElement.getAttribute('data-dir');
+                // Find first related directory group
+                const groups = document.querySelectorAll('.directory-group');
+                for (const group of groups) {
+                    const h3 = group.querySelector('.directory-name');
+                    if (h3 && h3.textContent.startsWith(clickedDir)) {
+                        group.scrollIntoView({ behavior: 'smooth' });
+                        const originalBg = group.style.backgroundColor;
+                        group.style.backgroundColor = 'var(--pico-primary-focus)';
+                        setTimeout(() => {
+                            group.style.backgroundColor = originalBg;
+                        }, 1000);
+                        break;
+                    }
+                }
+            });
         });
     </script>
     <script src="/static/js/app.js"></script>

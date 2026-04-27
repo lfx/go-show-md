@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -36,11 +39,35 @@ var (
 )
 
 func main() {
+	var addPath string
+	flag.StringVar(&addPath, "add", "", "Add a directory or file to watch")
+	flag.Parse()
+
+	if addPath != "" {
+		absPath, err := filepath.Abs(addPath)
+		if err != nil {
+			log.Fatalf("Invalid path: %v", err)
+		}
+		info, err := os.Stat(absPath)
+		if err != nil {
+			log.Fatalf("Path does not exist: %v", err)
+		}
+		if !info.IsDir() {
+			absPath = filepath.Dir(absPath)
+		}
+		addPath = absPath
+	}
+
 	// Ensure we run from the executable directory (for .app bundles)
 	if exe, err := os.Executable(); err == nil {
 		if err := os.Chdir(filepath.Dir(exe)); err != nil {
 			log.Printf("Failed to change working directory: %v", err)
 		}
+	}
+
+	if addPath != "" {
+		handleCLIAdd(addPath)
+		return
 	}
 
 	// 1. Load configuration and templates immediately
@@ -58,6 +85,44 @@ func main() {
 	// 2. Run the systray application
 	// This takes over the main thread
 	systray.Run(onReady, onExit)
+}
+
+func handleCLIAdd(addPath string) {
+	cfg, err := config.Load(config.DefaultConfigPath)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	addr := fmt.Sprintf("http://%s:%d/api/add-directory", cfg.Host, cfg.Port)
+	reqBody, _ := json.Marshal(map[string]string{"directory": addPath})
+
+	// Make a short timeout client
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Post(addr, "application/json", bytes.NewBuffer(reqBody))
+
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			fmt.Printf("Successfully added %s to running instance.\n", addPath)
+			os.Exit(0)
+		} else {
+			fmt.Printf("Failed to add to running instance: HTTP %d\n", resp.StatusCode)
+			os.Exit(1)
+		}
+	} else {
+		// App is probably not running, modify config directly
+		added := cfg.AddDirectory(addPath)
+		if !added {
+			fmt.Printf("%s is already being watched.\n", addPath)
+		} else {
+			if err := cfg.Save(config.DefaultConfigPath); err != nil {
+				fmt.Printf("Failed to save config: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Successfully added %s to config.\n", addPath)
+		}
+		os.Exit(0)
+	}
 }
 
 func onReady() {
