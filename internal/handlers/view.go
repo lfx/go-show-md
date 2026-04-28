@@ -49,13 +49,15 @@ func (h *ViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		FilePath string
-		Content  template.HTML
-		FileName string
+		FilePath   string
+		Content    template.HTML
+		RawContent string
+		FileName   string
 	}{
-		FilePath: filePath,
-		Content:  template.HTML(html),
-		FileName: filePath,
+		FilePath:   filePath,
+		Content:    template.HTML(html),
+		RawContent: string(content),
+		FileName:   filePath,
 	}
 
 	if err := h.tmpl.ExecuteTemplate(w, "view.html", data); err != nil {
