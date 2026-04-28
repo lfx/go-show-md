@@ -54,3 +54,8 @@ brews:
     test: |
       assert_path_exists bin/"go-show-md"
       assert_predicate bin/"go-show-md", :executable?
+
+    service: |
+      run opt_bin/"go-show-md"
+      keep_alive true
+      working_dir opt_bin

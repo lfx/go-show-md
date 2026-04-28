@@ -77,6 +77,28 @@
             background-color: var(--pico-card-background-color);
             border-radius: var(--pico-border-radius);
             border: 1px solid var(--pico-muted-border-color);
+            position: relative;
+        }
+
+        .copy-content-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.85rem;
+            background-color: var(--pico-secondary-background);
+            color: var(--pico-secondary-inverse);
+            border: none;
+            border-radius: var(--pico-border-radius);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .copy-content-btn:hover {
+            opacity: 1;
+            background-color: var(--pico-secondary-hover-background);
         }
 
         .markdown-content pre {
@@ -425,6 +447,8 @@
             </div>
 
             <article class="markdown-content">
+                <button class="copy-content-btn" id="copyContentBtn" title="Copy Raw Markdown">📋 Copy</button>
+                <div id="rawContent" style="display: none;">{{.RawContent}}</div>
                 {{.Content}}
             </article>
         </div>
@@ -542,6 +566,23 @@
 
             window.location.href = '/view?file=' + encodeURIComponent(newPath) + hash;
         });
+
+        // Copy raw markdown content
+        const copyBtn = document.getElementById('copyContentBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                const rawContent = document.getElementById('rawContent').textContent;
+                navigator.clipboard.writeText(rawContent).then(() => {
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '✅ Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            });
+        }
     </script>
 </body>
 
