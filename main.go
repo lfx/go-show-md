@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -37,6 +39,9 @@ var (
 	cfg  *config.Config
 	tmpl *template.Template
 )
+
+//go:embed templates/* static/*
+var contentFS embed.FS
 
 func main() {
 	var addPath string
@@ -77,7 +82,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	tmpl, err = template.ParseGlob("templates/*.html")
+	tmpl, err = template.ParseFS(contentFS, "templates/*.html")
 	if err != nil {
 		log.Fatalf("Failed to parse templates: %v", err)
 	}
@@ -199,7 +204,13 @@ func startServer() {
 
 	// Setup Handler with a NEW ServeMux to avoid collisions on restart
 	mux := http.NewServeMux()
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	
+	staticFS, err := fs.Sub(contentFS, "static")
+	if err != nil {
+		log.Fatalf("Failed to sub static fs: %v", err)
+	}
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	
 	mux.Handle("/", handlers.NewHomeHandler(cfg, tmpl))
 	mux.Handle("/view", handlers.NewViewHandler(cfg, tmpl))
 	mux.Handle("/api/add-directory", handlers.NewAddDirectoryHandler(cfg, w))
