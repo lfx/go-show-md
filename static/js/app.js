@@ -90,10 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showMessage(uploadMessage, data.message, 'success');
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
+                // Open the uploaded file right away
+                window.location.href = '/view?file=' + encodeURIComponent(data.path);
             } else {
                 showMessage(uploadMessage, data.message || 'Failed to upload file', 'error');
             }
